@@ -1,25 +1,24 @@
 ﻿namespace TennisKata
+open Microsoft.FSharp.Reflection
 
-
-type TennisScores =
-    | LOVE = 0
-    | FIFTEEN = 15
-    | THIRTY = 30
-    | FORTY = 40
-    | GAME = 100
-    | ADV = 200
+type TennisScores = | LOVE | FIFTEEN| THIRTY | FORTY | GAME | ADV
 
 type TennisGame() =
+    ///Returns the case name of the object with union type 'ty.
+    let GetUnionCaseName (x:'a) = 
+        match FSharpValue.GetUnionFields(x, typeof<'a>) with
+        | case, _ -> case.Name  
+
     let mutable currentScore = TennisScores.LOVE, TennisScores.LOVE
 
     let calculateScore current =
         match current with 
-            | (TennisScores.LOVE, x) -> (TennisScores.FIFTEEN, x)
-            | (TennisScores.FIFTEEN, x) -> (TennisScores.THIRTY, x)
-            | (TennisScores.THIRTY, x) -> (TennisScores.FORTY, x)
-            | (TennisScores.FORTY, TennisScores.FORTY) -> (TennisScores.ADV, snd current)
-            | (TennisScores.FORTY, x) 
-            | (TennisScores.ADV, x)  -> (TennisScores.GAME, x)
+            | (LOVE, x) -> (FIFTEEN, x)
+            | (FIFTEEN, x) -> (THIRTY, x)
+            | (THIRTY, x) -> (FORTY, x)
+            | (FORTY, FORTY) -> (ADV, snd current)
+            | (FORTY, x) 
+            | (ADV, x)  -> (GAME, x)
             | (_, _) -> current 
 
     member this.ScoreToService() =
@@ -32,12 +31,13 @@ type TennisGame() =
 
     member this.CurrentScore() =
         match currentScore with 
-            | (TennisScores.GAME, x) -> "GAME TO SERVICE"
-            | (x, TennisScores.GAME) -> "GAME TO RECEIVER"
-            | (TennisScores.FORTY, TennisScores.FORTY) -> "DEUCE"
-            | (x, y) -> if (x=y) then
-                            x.ToString() + " ALL"
+            | (GAME, x) -> "GAME TO SERVICE"
+            | (x, GAME) -> "GAME TO RECEIVER"
+            | (FORTY, FORTY) -> "DEUCE"
+            | (x, y) -> 
+                        let xname = x |> GetUnionCaseName
+                        if (x=y) then xname + " ALL"
                         else 
-                            x.ToString() + " - " + y.ToString() 
+                            xname + " - " + (y |> GetUnionCaseName)
 
                             
